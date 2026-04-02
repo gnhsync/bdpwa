@@ -242,16 +242,6 @@ self.addEventListener("fetch", evt => {
     return;
   }
 
-  // version.json — always network so update checks see the latest value
-  if (pathname === BASE + "/data/version.json") {
-    evt.respondWith(
-      fetch(evt.request, { cache: "no-store" }).catch(() =>
-        new Response("{}", { headers: { "Content-Type": "application/json" } })
-      )
-    );
-    return;
-  }
-
   // Everything else (content pages, data files, models) → bundle cache
   evt.respondWith(serveFromBundle(evt.request));
 });

@@ -462,7 +462,6 @@ def main():
     print(f"Saved qa_embeddings.bin ({qa_emb.nbytes / 1e6:.1f} MB)")
 
     # ── 7. bundle.tar.gz ─────────────────────────────────────────────────────
-    # version.json stays outside (lightweight update check).
     print("\nCreating bundle.tar.gz …")
     bundle_path = out_dir / "bundle.tar.gz"
     with tarfile.open(bundle_path, "w:gz") as tf:
@@ -480,7 +479,7 @@ def main():
             info = tarfile.TarInfo(name="data/pages_menu.json")
             info.size = len(pm)
             tf.addfile(info, io.BytesIO(pm))
-        for name in ("chunks_meta.json", "bm25.json", "qa_embeddings.bin"):
+        for name in ("version.json", "chunks_meta.json", "bm25.json", "qa_embeddings.bin"):
             tf.add(out_dir / name, arcname=f"data/{name}")
         for f in sorted(VENDOR_DIR.rglob("*")):
             if f.is_file():
