@@ -35,13 +35,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Try to pull the latest content zip. On failure the committed copy is used.
-      - name: Download latest content
+      - name: Check for new content
+        id: fetch
         run: |
-          if curl -fsSL "https://bdpublic.bugsanddrugs.org/api/v1/release/current.zip?uuid=x" \
-               -o /tmp/content_new.zip 2>/dev/null; then
-            mv /tmp/content_new.zip data/content.zip
-          fi
+          rc=0; python3 build/fetch_content.py || rc=$?
+          if [ "$rc" -eq 0 ]; then echo "updated=false" >> "$GITHUB_OUTPUT"
+          elif [ "$rc" -eq 2 ]; then echo "updated=true" >> "$GITHUB_OUTPUT"
+          else exit 1; fi
 
       # COPY data/content.zip busts the pipeline layer when content changes.
       # type=gha cache keeps model weights and vendor layers warm across runs.

@@ -421,19 +421,6 @@ def main():
     # ── 2. Version info ──────────────────────────────────────────────────────
     version_info = json.loads(files.get("export_version.json", b"{}"))
 
-    # Home page: the root UUID that appears as the first breadcrumb entry
-    home_uuid = None
-    for entry in json.loads(files.get("search_menu.json", b"[]")):
-        for page in entry.get("pages", []):
-            path = json.loads(page.get("uuid_path", "[]"))
-            if path and len(path[0]) > 1:
-                home_uuid = path[0][1]
-                break
-        if home_uuid:
-            break
-    if home_uuid:
-        version_info["home_uuid"] = home_uuid
-
     (out_dir / "version.json").write_text(json.dumps(version_info, indent=2))
     print(f"Content version: {version_info.get('version')}  ({version_info.get('date')})")
 
@@ -487,6 +474,12 @@ def main():
                 tf.addfile(info, io.BytesIO(data))
                 html_count += 1
         print(f"  Packed {html_count} content HTML files")
+        # Include pages_menu.json from the content zip for client-side navigation
+        if b"pages_menu.json" in files or "pages_menu.json" in files:
+            pm = files.get("pages_menu.json", files.get(b"pages_menu.json"))
+            info = tarfile.TarInfo(name="data/pages_menu.json")
+            info.size = len(pm)
+            tf.addfile(info, io.BytesIO(pm))
         for name in ("chunks_meta.json", "bm25.json", "qa_embeddings.bin"):
             tf.add(out_dir / name, arcname=f"data/{name}")
         for f in sorted(VENDOR_DIR.rglob("*")):

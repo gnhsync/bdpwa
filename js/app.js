@@ -45,13 +45,7 @@ let appInitialized = false;
 async function boot() {
   registerServiceWorker(); // sets up SW + message listener
 
-  const [versionData, status] = await Promise.all([
-    fetch(`${BASE}/data/version.json`).then(r => r.ok ? r.json() : null).catch(() => null),
-    querySWStatus(),
-  ]);
-
-  if (versionData?.version) contentVersionEl.textContent = `v${versionData.version}`;
-  homeUuid = versionData?.home_uuid ?? null;
+  const status = await querySWStatus();
 
   if (status?.status === "ready") {
     await initApp();
@@ -85,6 +79,18 @@ async function initApp() {
   appInitialized = true;
 
   showPanel("content");
+
+  // Load pages_menu.json from bundle to find home page and show version
+  try {
+    const [pagesMenu, versionData] = await Promise.all([
+      fetch(`${BASE}/data/pages_menu.json`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${BASE}/data/version.json`).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
+    const home = pagesMenu?.find(e => e.title === "Home");
+    if (home) homeUuid = home.id;
+    if (versionData?.date) contentVersionEl.textContent = versionData.date;
+  } catch {}
+
   if (homeUuid) loadContent(homeUuid);
 
   try {
