@@ -12,7 +12,6 @@ COPY build/requirements.txt build/requirements.txt
 RUN pip3 install --no-cache-dir --break-system-packages -r build/requirements.txt
 
 # ── Vendor assets — committed to git, verified against upstream on every build ─
-# Committed files are the fallback if a CDN goes down.
 # Any upstream change causes a diff mismatch and fails the build immediately.
 COPY vendor/ vendor/
 COPY build/vendor.sh build/vendor.sh

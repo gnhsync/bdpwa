@@ -18,8 +18,7 @@ PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8081
 
 class Handler(SimpleHTTPRequestHandler):
     def end_headers(self):
-        # No COOP/COEP for single-threaded mode — they block CDN fetches.
-        # Only Cache-Control to prevent stale JS/CSS during development.
+        # Only Cache-Control to prevent stale SW/JS/CSS during development.
         self.send_header("Cache-Control", "no-cache")
         super().end_headers()
 

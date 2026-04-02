@@ -8,7 +8,6 @@ data
 
 # Build artefacts
 _site
-vendor_cache
 build/__pycache__
 __pycache__
 *.pyc

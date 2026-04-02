@@ -7,7 +7,7 @@ Content is sourced from the Bugs & Drugs platform and bundled at build time.
 
 - **Search**: BM25 lexical retrieval fused (RRF) with bi-encoder vector search
   over LLM-generated query-affinity descriptions
-- **Offline**: all content, models, and data ship as a single `bundle.zip`,
+- **Offline**: all content, models, and data ship as a single `bundle.tar.gz`,
   downloaded by the service worker on first visit and served from cache
 - **Updates**: `version.json` is checked on startup; new bundles download in
   the background while the app stays usable, then apply on user prompt
@@ -15,6 +15,7 @@ Content is sourced from the Bugs & Drugs platform and bundled at build time.
 ## Build
 
 Requires Docker and an OpenAI API key (for query-affinity generation).
+`data/content.zip` must be present (committed to the repo).
 
 ```bash
 # Export static site to _site/
@@ -25,28 +26,29 @@ docker build \
   .
 
 # Or build a runnable serve image
-docker build --secret id=openai_key,src=/path/to/openai_key -t bugsanddrugs .
-docker run -p 8081:8081 bugsanddrugs
+docker build --secret id=openai_key,src=/path/to/openai_key -t bdpwa .
+docker run -p 8081:8081 bdpwa
 ```
 
 The build pipeline (`build/pipeline.py`) runs inside Docker:
-1. Downloads content zip from the Bugs & Drugs API
+1. Reads `data/content.zip`
 2. Extracts text chunks and builds a BM25 index
 3. Generates query-affinity descriptions via GPT-4o-mini (cached in `data/query_affinity.json`)
 4. Embeds affinities with BGE-base-en-v1.5 (ONNX, vendored in `vendor/`)
-5. Packs everything into `data/bundle.zip`
+5. Packs everything into `data/bundle.tar.gz`
 
 ## Deploy
 
 GitHub Actions (`.github/workflows/deploy.yml`) runs on push to `main` and
-weekly. It builds the artifact stage, injects the base path for GitHub Pages,
-and deploys to GitHub Pages. Requires `OPENAI_API_KEY` in repository secrets.
+daily. It tries to pull the latest content zip from upstream, builds the
+artifact stage, and deploys to GitHub Pages. Requires `OPENAI_API_KEY` in
+repository secrets.
 
 ## Vendored assets
 
-`vendor/` contains the Transformers.js library, fflate, and the BGE model
-files. These are committed to git and verified against upstream on every
-Docker build (`build/vendor.sh` downloads fresh copies and `diff -r` fails
-the build if anything has changed upstream).
+`vendor/` contains the Transformers.js library and the BGE model files.
+These are committed to git and verified against upstream on every Docker build
+(`build/vendor.sh` downloads fresh copies and `diff -r` fails the build if
+anything has changed upstream).
 
 To re-vendor: `bash build/vendor.sh vendor/`
