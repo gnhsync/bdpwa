@@ -57,7 +57,6 @@ FROM app AS artifact
 FROM alpine:latest AS serve
 RUN apk add --no-cache python3
 COPY --from=app / /app/
-COPY serve.py /app/
 WORKDIR /app
 EXPOSE 8081
-CMD ["python3", "serve.py", "8081"]
+CMD ["python3", "-m", "http.server", "8081"]

@@ -421,12 +421,13 @@ def main():
     # ── 2. Version info ──────────────────────────────────────────────────────
     version_info = json.loads(files.get("export_version.json", b"{}"))
 
-    # Home page: first page in the search menu whose uuid_path has depth 1
+    # Home page: the root UUID that appears as the first breadcrumb entry
     home_uuid = None
     for entry in json.loads(files.get("search_menu.json", b"[]")):
         for page in entry.get("pages", []):
-            if len(json.loads(page.get("uuid_path", "[]"))) == 1:
-                home_uuid = page["id"]
+            path = json.loads(page.get("uuid_path", "[]"))
+            if path and len(path[0]) > 1:
+                home_uuid = path[0][1]
                 break
         if home_uuid:
             break

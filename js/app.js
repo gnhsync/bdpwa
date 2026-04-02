@@ -150,23 +150,11 @@ function handleSWMessage({ type, ...data }) {
   if (type === "RELOAD") { location.href = BASE + "/"; return; }
 }
 
-// ── URL routing ───────────────────────────────────────────────────────────────
-function getUuidFromPath() {
-  const path = window.location.pathname;
-  const match = path.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\.html)?$/i);
-  return match ? match[1].toLowerCase() : null;
-}
-
-function navigate(uuid, pushState = true) {
-  if (pushState) history.pushState({ uuid }, "", `${BASE}/content/${uuid}.html`);
+// ── Navigation ────────────────────────────────────────────────────────────────
+function navigate(uuid) {
   showPanel("content");
   loadContent(uuid);
 }
-
-window.addEventListener("popstate", (e) => {
-  const uuid = e.state?.uuid || getUuidFromPath();
-  if (uuid) { showPanel("content"); loadContent(uuid); }
-});
 
 logoLink?.addEventListener("click", (e) => {
   e.preventDefault();
@@ -361,7 +349,7 @@ function renderContent(html) {
     // UUID navigation links (nav, internal-link, breadcrumb, etc.)
     if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)) {
       const uuid = raw.toLowerCase();
-      a.setAttribute("href", `/content/${uuid}.html`);
+      a.setAttribute("href", "#");
       a.addEventListener("click", (e) => {
         e.preventDefault();
         navigate(uuid);
