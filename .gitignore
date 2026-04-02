@@ -2,6 +2,9 @@
 data/*
 !data/content.zip
 
+# Generated icons
+icons/*.png
+
 # Build artefacts
 _site/
 build/.venv/

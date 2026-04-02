@@ -4,7 +4,7 @@ WORKDIR /app
 
 # ── System deps ───────────────────────────────────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip \
+    python3 python3-pip libcairo2 libpangocairo-1.0-0 \
   && rm -rf /var/lib/apt/lists/*
 
 # ── Python build deps ─────────────────────────────────────────────────────────
@@ -32,6 +32,7 @@ COPY index.html manifest.json sw.js 404.html ./
 COPY css/ css/
 COPY js/ js/
 COPY icons/ icons/
+RUN cd icons && python3 generate_icons.py
 
 # ── App bundle ────────────────────────────────────────────────────────────────
 # Single source of truth for what belongs in the deployable app.
