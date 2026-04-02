@@ -75,10 +75,11 @@ export class SearchEngine {
       `${location.origin}${this.base}/vendor/js/transformers.min.js`
     );
 
-    // Models are always served from the bundle cache; remote fetching is never needed.
+    // Models and WASM runtime are always served from the bundle cache; remote fetching is never needed.
     env.allowLocalModels  = true;
     env.allowRemoteModels = false;
     env.localModelPath    = `${location.origin}${this.base}/vendor/models/`;
+    env.backends.onnx.wasm.wasmPaths = `${location.origin}${this.base}/vendor/js/`;
 
     this.biEncoder = await pipeline("feature-extraction", BI_ENCODER_MODEL, {
       quantized: true,

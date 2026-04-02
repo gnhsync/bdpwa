@@ -4,7 +4,7 @@ WORKDIR /app
 
 # ── System deps ───────────────────────────────────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip libcairo2 libpangocairo-1.0-0 \
+    python3 python3-pip curl libcairo2 libpangocairo-1.0-0 \
   && rm -rf /var/lib/apt/lists/*
 
 # ── Python build deps ─────────────────────────────────────────────────────────
