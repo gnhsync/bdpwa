@@ -12,6 +12,19 @@ Content is sourced from the Bugs & Drugs platform and bundled at build time.
 - **Updates**: `version.json` is checked on startup; new bundles download in
   the background while the app stays usable, then apply on user prompt
 
+## Content updates
+
+`build/fetch_content.py` checks the upstream Bugs & Drugs API for new content:
+
+```bash
+python3 build/fetch_content.py          # download only if version changed
+python3 build/fetch_content.py --force  # always download
+```
+
+It generates a persistent device UUID (stored in `data/.device_uuid`) and
+verifies the downloaded zip's `export_version.json` matches the upstream
+version before replacing `data/content.zip`.
+
 ## Build
 
 Requires Docker and an OpenAI API key (for query-affinity generation).
@@ -35,20 +48,29 @@ The build pipeline (`build/pipeline.py`) runs inside Docker:
 2. Extracts text chunks and builds a BM25 index
 3. Generates query-affinity descriptions via GPT-4o-mini (cached in `data/query_affinity.json`)
 4. Embeds affinities with BGE-base-en-v1.5 (ONNX, vendored in `vendor/`)
-5. Packs everything into `data/bundle.tar.gz`
+5. Packs everything into `data/bundle.tar.gz` (content HTML, search indices,
+   `pages_menu.json`, `version.json`, and vendored JS/models)
+
+For local testing: `python3 -m http.server 8081`
+
+## Dependencies
+
+Python build dependencies are specified in `build/requirements.in` (loose
+constraints) and pinned in `build/requirements.txt` (frozen from the Docker
+builder image).
 
 ## Deploy
 
 GitHub Actions (`.github/workflows/deploy.yml`) runs on push to `main` and
-daily. It tries to pull the latest content zip from upstream, builds the
+daily. It uses `build/fetch_content.py` to check for new content, builds the
 artifact stage, and deploys to GitHub Pages. Requires `OPENAI_API_KEY` in
 repository secrets.
 
 ## Vendored assets
 
-`vendor/` contains the Transformers.js library and the BGE model files.
-These are committed to git and verified against upstream on every Docker build
-(`build/vendor.sh` downloads fresh copies and `diff -r` fails the build if
-anything has changed upstream).
+`vendor/` contains the Transformers.js library, ONNX Runtime WASM files, and
+the BGE-base-en-v1.5 model files. These are committed to git and verified
+against upstream on every Docker build (`build/vendor.sh` downloads fresh
+copies and `diff -r` fails the build if anything has changed upstream).
 
 To re-vendor: `bash build/vendor.sh vendor/`
