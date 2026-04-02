@@ -62,22 +62,40 @@ async function downloadBundle(cacheName, version) {
   const total = parseInt(resp.headers.get("content-length") || "0", 10);
   let received = 0;
 
-  // Track compressed-byte progress while streaming through gzip decompressor
-  const progressStream = new TransformStream({
-    transform(chunk, controller) {
-      received += chunk.length;
-      notify({ type: "DOWNLOAD_PROGRESS", received, total });
-      controller.enqueue(chunk);
-    },
-  });
+  let tarBuf;
 
-  const decompressed = resp.body
-    .pipeThrough(progressStream)
-    .pipeThrough(new DecompressionStream("gzip"));
+  if (typeof DecompressionStream !== "undefined") {
+    // Stream through gzip decompressor with progress tracking
+    const progressStream = new TransformStream({
+      transform(chunk, controller) {
+        received += chunk.length;
+        notify({ type: "DOWNLOAD_PROGRESS", received, total });
+        controller.enqueue(chunk);
+      },
+    });
 
-  const tarBuf = await new Response(decompressed).arrayBuffer();
+    const decompressed = resp.body
+      .pipeThrough(progressStream)
+      .pipeThrough(new DecompressionStream("gzip"));
+
+    tarBuf = await new Response(decompressed).arrayBuffer();
+  } else {
+    // Fallback: download entire response then decompress via Response trick.
+    // (iOS < 16.4, older browsers without DecompressionStream)
+    const compressed = await resp.arrayBuffer();
+    notify({ type: "DOWNLOAD_PROGRESS", received: compressed.byteLength, total, phase: "unpacking" });
+
+    // Create a gzip Response and re-read it — the browser handles decompression
+    // because we label the body as gzip-encoded.
+    const inflated = await new Response(
+      new Blob([compressed]),
+      { headers: { "Content-Encoding": "gzip", "Content-Type": "application/octet-stream" } },
+    ).arrayBuffer();
+
+    tarBuf = inflated;
+  }
+
   const tar = new Uint8Array(tarBuf);
-
   notify({ type: "DOWNLOAD_PROGRESS", received, total, phase: "unpacking" });
 
   // Parse tar: 512-byte headers, octal size at offset 124
@@ -104,8 +122,6 @@ async function downloadBundle(cacheName, version) {
 }
 
 // ── Install ───────────────────────────────────────────────────────────────────
-// Only cache the app shell. Bundle download happens in activate so
-// clients.claim() can be called first and progress messages reach the page.
 
 self.addEventListener("install", evt => {
   evt.waitUntil(
@@ -129,14 +145,8 @@ self.addEventListener("activate", evt => {
     // Take control of all pages immediately so progress messages reach them
     await self.clients.claim();
 
-    // Download the initial bundle if we don't have one yet.
-    // waitUntil keeps the SW alive for the duration of the download.
-    if (!current) {
-      await ensureBundle().catch(err => {
-        console.warn("Initial bundle download failed:", err);
-        notify({ type: "DOWNLOAD_ERROR", message: err.message });
-      });
-    }
+    // Notify the page so it can request the bundle download if needed
+    notify({ type: "ACTIVATED" });
   })());
 });
 
@@ -167,10 +177,14 @@ async function ensureBundle() {
 
 self.addEventListener("message", evt => {
   const { type } = evt.data || {};
-  if (type === "SKIP_WAITING")  { self.skipWaiting(); return; }
-  if (type === "GET_STATUS")    { handleGetStatus(evt); return; }
-  if (type === "CHECK_VERSION") { checkForUpdate().catch(console.warn); return; }
-  if (type === "APPLY_UPDATE")  { applyUpdate().catch(console.warn); return; }
+  if (type === "SKIP_WAITING")    { self.skipWaiting(); return; }
+  if (type === "GET_STATUS")      { handleGetStatus(evt); return; }
+  if (type === "CHECK_VERSION")   { checkForUpdate().catch(console.warn); return; }
+  if (type === "APPLY_UPDATE")    { applyUpdate().catch(console.warn); return; }
+  if (type === "ENSURE_BUNDLE")   { ensureBundle().catch(err => {
+    console.warn("Bundle download failed:", err);
+    notify({ type: "DOWNLOAD_ERROR", message: err.message });
+  }); return; }
 });
 
 async function handleGetStatus(evt) {

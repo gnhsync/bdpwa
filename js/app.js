@@ -142,6 +142,13 @@ function updateDownloadProgress({ received, total, phase }) {
 function handleSWMessage({ type, ...data }) {
   if (type === "DOWNLOAD_PROGRESS") { updateDownloadProgress(data); return; }
   if (type === "BUNDLE_READY")      { initApp(); return; }
+  if (type === "ACTIVATED") {
+    // SW just activated and claimed this page — ask it to download the bundle.
+    // Done from the client side so the SW's activate event isn't killed by
+    // iOS's aggressive service worker timeouts.
+    navigator.serviceWorker.controller?.postMessage({ type: "ENSURE_BUNDLE" });
+    return;
+  }
   if (type === "UPDATE_READY")      {
     if (downloadIndicator) downloadIndicator.hidden = true;
     updateBanner.hidden = false;
