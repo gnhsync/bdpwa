@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+  <!-- Bug body (circle) -->
+  <circle cx="256" cy="240" r="90" fill="#0ea5e9"/>
+  <!-- Bug eyes -->
+  <circle cx="226" cy="218" r="12" fill="#0f172a"/>
+  <circle cx="286" cy="218" r="12" fill="#0f172a"/>
+  <!-- Bug legs -->
+  <line x1="166" y1="210" x2="210" y2="230" stroke="#0ea5e9" stroke-width="10" stroke-linecap="round"/>
+  <line x1="166" y1="240" x2="210" y2="245" stroke="#0ea5e9" stroke-width="10" stroke-linecap="round"/>
+  <line x1="166" y1="270" x2="210" y2="258" stroke="#0ea5e9" stroke-width="10" stroke-linecap="round"/>
+  <line x1="346" y1="210" x2="302" y2="230" stroke="#0ea5e9" stroke-width="10" stroke-linecap="round"/>
+  <line x1="346" y1="240" x2="302" y2="245" stroke="#0ea5e9" stroke-width="10" stroke-linecap="round"/>
+  <line x1="346" y1="270" x2="302" y2="258" stroke="#0ea5e9" stroke-width="10" stroke-linecap="round"/>
+  <!-- Pill / capsule -->
+  <rect x="196" y="340" width="120" height="44" rx="22" fill="#f59e0b"/>
+  <rect x="256" y="340" width="60" height="44" rx="0" fill="#f87171"/>
+  <rect x="256" y="340" width="60" height="44" rx="22" fill="#f87171"/>
+</svg>

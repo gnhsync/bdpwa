@@ -1,0 +1,10 @@
+# Pipeline outputs — generated at build time
+data/*
+!data/content.zip
+
+# Build artefacts
+_site/
+build/.venv/
+build/__pycache__/
+*.pyc
+*.pyo

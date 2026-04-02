@@ -1,0 +1,1 @@
+vendor/models/Xenova/bge-base-en-v1.5/onnx/model_quantized.onnx filter=lfs diff=lfs merge=lfs -text

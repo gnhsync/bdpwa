@@ -1,0 +1,84 @@
+name: Build & Deploy
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Force rebuild even if content version is unchanged
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    # Don't re-trigger when the pipeline commits data/version.json back
+    paths-ignore:
+      - 'data/**'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Try to pull the latest content zip. On failure the committed copy is used.
+      - name: Download latest content
+        run: |
+          if curl -fsSL "https://bdpublic.bugsanddrugs.org/api/v1/release/current.zip?uuid=x" \
+               -o /tmp/content_new.zip 2>/dev/null; then
+            mv /tmp/content_new.zip data/content.zip
+          fi
+
+      # COPY data/content.zip busts the pipeline layer when content changes.
+      # type=gha cache keeps model weights and vendor layers warm across runs.
+      # The OpenAI key is passed as a BuildKit secret — never written to any layer.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & export static site
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: artifact
+          outputs: type=local,dest=_site
+          secrets: openai_key=${{ secrets.OPENAI_API_KEY }}
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max
+
+      # Stamp sw.js with a hash of the shell assets so browsers detect a new SW
+      # whenever any shell file changes and bust the shell cache.
+      - name: Stamp cache version
+        run: |
+          CACHE_VERSION=$(cat _site/sw.js _site/js/app.js _site/js/search.js _site/js/bm25.js _site/css/style.css | sha256sum | cut -c1-12)
+          sed -i "s|__CACHE_VERSION__|$CACHE_VERSION|g" _site/sw.js
+
+      # Commit the zip if it changed so the repo always has the latest copy.
+      - name: Commit updated content
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/content.zip
+          git diff --staged --quiet || git commit -m "chore: update content" && git push
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4

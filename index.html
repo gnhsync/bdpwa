@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bugs &amp; Drugs</title>
+  <meta name="theme-color" content="#58144E" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="css/style.css" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="B&amp;D" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+</head>
+<body>
+
+<header id="header">
+  <a href="/" id="logo">Bugs &amp; Drugs</a>
+  <div id="search-wrap" role="search">
+    <input id="search-input" type="search"
+           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+           placeholder="Initialising…" disabled />
+    <button id="search-btn" disabled>Search</button>
+  </div>
+  <button id="install-btn" hidden>Install</button>
+</header>
+
+<main id="main">
+  <section id="results-panel" hidden></section>
+  <article id="content-panel">
+    <p id="welcome">Search for a drug, organism, or clinical condition.</p>
+  </article>
+</main>
+
+<footer id="status-bar" data-level="info">
+  <span class="status-dot"></span>
+  <span id="status-text">Initialising…</span>
+  <span id="download-indicator" hidden></span>
+  <span id="content-version"></span>
+</footer>
+
+<div id="popover" hidden>
+  <div id="popover-header"><button id="popover-close">&#x2715;</button></div>
+  <div id="popover-body"></div>
+</div>
+
+<div id="update-banner" hidden>
+  <span>Update available.</span>
+  <button id="update-reload">Reload</button>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
