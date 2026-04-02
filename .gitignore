@@ -5,6 +5,10 @@ data/*
 # Generated icons
 icons/*.png
 
+# Deploy key
+.ssh_deploy_key
+.ssh_deploy_key.pub
+
 # Build artefacts
 _site/
 build/.venv/
